@@ -4,7 +4,7 @@ from collections import OrderedDict
 from collections import Counter, defaultdict
 
 # Load the CSV file (adjust the path to your CSV file)
-papers = pd.read_csv('d3_2021_12.csv', nrows=1000)
+papers = pd.read_csv('d3_2021_12.csv', nrows=10)
 
 # Extract unique fields from fieldsOfStudy
 fields_set = set()
@@ -13,7 +13,7 @@ for fields in papers['fieldsOfStudy'].dropna():
     fields_set.update(field.strip() for field in cleaned_fields)
 
 # Map fields to integers (1-based indexing)
-field_to_int = OrderedDict({'Misc': 0})
+field_to_int = OrderedDict({'misc': 0})
 field_to_int.update({field: i + 1 for i, field in enumerate(sorted(fields_set))})
 
 # Count fields per author to determine their primary field
@@ -26,7 +26,7 @@ for index, paper in papers.iterrows():
     if primary_field not in field_to_int:
         primary_field = 'Misc'
     # Get the list of author IDs
-    author_ids = paper['id'].split(',')
+    author_ids = re.findall('[0-9]+',paper['authors'])
     # Update field counts for each author
     for author_id in author_ids:
         author_field_counts[author_id.strip()][primary_field] += 1
@@ -35,6 +35,13 @@ for index, paper in papers.iterrows():
 unique_author_ids = list(author_field_counts.keys())
 sorted_unique_author_ids = sorted(unique_author_ids)
 author_id_to_int = {author_id: i + 1 for i, author_id in enumerate(sorted_unique_author_ids)}
+# re.findall(r'[a-z]+', fields.lower().replace(' ', ''))
+for index, paper in papers.iterrows():
+
+    print(f"Paper {index}: number of authors = {len(paper['authors'].split(','))}, authors = {paper['authors']}, author ids = {re.findall('[0-9]+',paper['authors'])}")
+    author_ids = set(author_id.strip() for author_id in paper['id'].split(','))
+    sorted_author_ids = sorted(author_ids)
+    # int_ids = [author_id_to_int[author_id] for author_id in sorted_author_ids]
 
 # Write the dataset to a file
 with open('dataset.txt', 'w') as f:
@@ -51,7 +58,7 @@ with open('dataset.txt', 'w') as f:
     f.write("# Simplex\n")
     for index, paper in papers.iterrows():
         # Get unique, sorted author IDs for the simplex
-        author_ids = set(author_id.strip() for author_id in paper['id'].split(','))
+        author_ids = set(author_id.strip() for author_id in re.findall('[0-9]+',paper['authors']))
         sorted_author_ids = sorted(author_ids)
         # Map to integer IDs
         int_ids = [author_id_to_int[author_id] for author_id in sorted_author_ids]
